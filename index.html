@@ -1,19 +1,83 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Interactive Speech Experience</title>
-  <link rel="stylesheet" href="style.css" />
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Speech to Text</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 50px;
+        }
+        #startStopButton {
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+        #result {
+            margin-top: 20px;
+            font-size: 18px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            width: 100%;
+            max-width: 600px;
+            margin: 20px auto;
+            min-height: 50px;
+        }
+    </style>
 </head>
 <body>
-  <div id="text-container"></div>
-
-  <div id="audio-controls">
-    <button id="start-audio">Start Audio</button>
-    <button id="stop-audio">Stop Audio</button>
-  </div>
-
-  <script src="script.js"></script>
+    <h1>Speech To Text</h1>
+    <button id="startStopButton">Start Listening</button>
+    <div id="result"></div>
+    <script>
+      // 1) Fix the typo here:
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        alert("Sorry, your browser doesn't support the Web Speech API.");
+      } else {
+        const recognition = new SpeechRecognition();
+        recognition.interimResults = true;
+        recognition.continuous = true;
+        recognition.lang = 'en-US';
+    
+        const startStopButton = document.getElementById('startStopButton');
+        const resultDiv = document.getElementById('result');
+        let listening = false;
+    
+        recognition.onresult = (event) => {
+          let transcript = '';
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            transcript += event.results[i][0].transcript;
+          }
+          resultDiv.textContent = transcript;
+        };
+    
+        recognition.onerror = (event) => {
+          console.error("Speech recognition error:", event.error);
+          // you can choose to restart on no-speech if you want continuous listening:
+          if (event.error === 'no-speech') {
+            recognition.stop();
+            recognition.start();
+          }
+        };
+    
+        recognition.onend = () => {
+          listening = false;
+          startStopButton.textContent = 'Start Listening';
+        };
+    
+        startStopButton.addEventListener('click', () => {
+          if (listening) {
+            recognition.stop();
+          } else {
+            recognition.start();
+            startStopButton.textContent = 'Stop Listening';
+            listening = true;
+          }
+        });
+      }
+    </script>    
 </body>
 </html>

@@ -1,76 +1,47 @@
-let recognition;
-let currentAudio = null;
-const audioFiles = ['Rain.m4a', 'Wind.m4a', 'Picnic.m4a', 'Bird.m4a'];
+window.addEventListener('load', () => {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    alert('Sorry, your browser does not support SpeechRecognition.');
+    return;
+  }
 
-// 1) SpeechRecognition setup
-function initSpeechRecognition() {
-  const SpeechAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechAPI) return alert('Use Chrome or Edge for speech recog.');
+  const recognition = new SpeechRecognition();
+  recognition.continuous = true;      // keep listening until the page unloads
+  recognition.interimResults = false; // only final transcripts
+  recognition.lang = 'en-US';         // set your language
 
-  recognition = new SpeechAPI();
-  recognition.continuous    = true;
-  recognition.interimResults = true;  // show partial so you can debug
-  recognition.lang          = 'en-US';
+  const container = document.getElementById('container');
 
-  recognition.onresult = event => {
+  recognition.onresult = (event) => {
     for (let i = event.resultIndex; i < event.results.length; i++) {
-      const res = event.results[i];
-      const txt = res[0].transcript.trim();
-      console.log(res.isFinal ? '✔️ final:' : '⏳ interim:', txt);
-      if (res.isFinal) createTextElement(txt);
+      if (event.results[i].isFinal) {
+        const transcript = event.results[i][0].transcript.trim();
+        spawnWords(transcript);
+      }
     }
   };
 
-  recognition.onend = () => recognition.start();  // auto-restart
-  recognition.onerror = e => console.error(e);
+  recognition.onerror = (err) => {
+    console.error('Speech recognition error:', err);
+  };
+
+  // start listening immediately
   recognition.start();
-}
 
+  function spawnWords(text) {
+    const words = text.split(/\s+/);
+    words.forEach(word => {
+      const span = document.createElement('span');
+      span.className = 'word';
+      span.textContent = word;
 
-// 2) Create & animate text
-function createTextElement(text) {
-  const el = document.createElement('div');
-  el.className   = 'speech-text';
-  el.textContent = text;
-  const x = Math.random() * (window.innerWidth - 200);
-  const y = Math.random() * (window.innerHeight - 50);
-  el.style.left = `${x}px`;
-  el.style.top  = `${y}px`;
-  document.getElementById('text-container').appendChild(el);
+      // pick a random position inside the viewport
+      const maxX = window.innerWidth  - 100; // leave some room
+      const maxY = window.innerHeight -  30;
+      span.style.left = `${Math.random() * maxX}px`;
+      span.style.top  = `${Math.random() * maxY}px`;
 
-  if (currentAudio) {
-    const fname = currentAudio.src.split('/').pop();
-    if (fname === 'Rain.m4a') {
-      el.classList.add('raindrop');
-      setTimeout(() => el.remove(), 3000);
-    } else if (fname === 'Wind.m4a') {
-      el.classList.add('fly-away');
-      setTimeout(() => el.remove(), 3000);
-    }
-    // Picnic/Bird just accumulate
+      container.appendChild(span);
+    });
   }
-}
-
-// 3) Play random audio
-function playNextAudio() {
-  const choice = audioFiles[Math.floor(Math.random() * audioFiles.length)];
-  if (currentAudio) {
-    currentAudio.pause();
-    currentAudio.onended = null;
-  }
-  currentAudio = new Audio(`assets/${choice}`);
-  currentAudio.play().catch(err => console.error('Audio play failed:', err));
-  currentAudio.onended = playNextAudio;
-}
-
-// 4) Wire up optional buttons
-document.getElementById('start-audio')
-  .addEventListener('click', playNextAudio);
-document.getElementById('stop-audio')
-  .addEventListener('click', () => currentAudio && currentAudio.pause());
-
-// 5) Auto-start everything on load
-window.addEventListener('load', () => {
-  initSpeechRecognition();
-  playNextAudio();
 });
