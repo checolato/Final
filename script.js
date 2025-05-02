@@ -1,7 +1,7 @@
 let recognition;
 let isAudioPlaying = false;
 let currentAudio = null;
-const audioFiles = ['rain.mp3', 'wind.mp3', 'picnic.mp3', 'bird.mp3'];
+const audioFiles = ['Rain.m4a', 'Wind.m4a', 'Picnic.m4a', 'Bird.m4a'];
 
 // Initialize speech recognition
 function initSpeechRecognition() {
@@ -42,10 +42,10 @@ function createTextElement(text) {
     // Apply animation based on current audio
     if (currentAudio) {
         const audioName = currentAudio.src.split('/').pop();
-        if (audioName === 'rain.mp3') {
+        if (audioName === 'Rain.m4a') {
             textElement.classList.add('raindrop');
             setTimeout(() => textElement.remove(), 3000);
-        } else if (audioName === 'wind.mp3') {
+        } else if (audioName === 'Wind.m4a') {
             textElement.classList.add('fly-away');
             setTimeout(() => textElement.remove(), 3000);
         }
@@ -65,7 +65,10 @@ function playRandomAudio() {
         
         currentAudio = new Audio(`assets/${audioFile}`);
         currentAudio.loop = true;
-        currentAudio.play();
+        currentAudio.play().catch(error => {
+            console.error('Error playing audio:', error);
+            alert('Error playing audio. Please make sure your browser supports M4A format.');
+        });
     }
 }
 
