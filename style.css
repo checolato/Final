@@ -1,0 +1,39 @@
+body {
+  margin: 0; padding: 0;
+  background: url('assets/background.png') no-repeat center center fixed;
+  background-size: cover;
+  overflow: hidden;
+  font-family: sans-serif;
+}
+
+#text-container {
+  position: relative;
+  width: 100vw; height: 100vh;
+  pointer-events: none;
+}
+
+.speech-text {
+  position: absolute;
+  z-index: 999;
+  padding: 4px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  background: rgba(255,255,255,0.8);
+  color: black;
+  transition: transform 3s ease, opacity 3s ease;
+  font-size: 1rem;
+}
+
+@keyframes raindrop {
+  to { transform: translateY(100vh); opacity: 0; }
+}
+.raindrop {
+  animation: raindrop 3s forwards;
+}
+
+@keyframes flyAway {
+  to { transform: translateY(-100vh) translateX(100px); opacity: 0; }
+}
+.fly-away {
+  animation: flyAway 3s forwards;
+}
