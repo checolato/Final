@@ -1,17 +1,20 @@
 window.addEventListener('DOMContentLoaded', () => {
-  const socket     = io();              // ← connect to your server!
-  const container  = document.getElementById('container');
-  let audioStarted = false;
-  let currentAudio = null;
-  let currentSound = null;
+  const container   = document.getElementById('container');
+  let audioStarted  = false;
+  let currentAudio  = null;
+  let currentSound  = null;
+  let switchTimer   = null;
+  let currentIndex  = 0;
 
-  const audioFiles = [
-    { name: 'Rain',   src: 'assets/Rain.mp3'   },
-    { name: 'Wind',   src: 'assets/Wind.mp3'   },
-    { name: 'Picnic', src: 'assets/Park.mp3' },
-    { name: 'Bird',   src: 'assets/Bird.mp3'   }
+  // 1) Your 4‐step playlist, with durations in milliseconds
+  const playlist = [
+    { name: 'Park', src: 'assets/Park.mp3',   duration: 20000 },
+    { name: 'Rain', src: 'assets/Rain.mp3',   duration: 15000 },
+    { name: 'Bird', src: 'assets/Bird.mp3',   duration: 20000 },
+    { name: 'Wind', src: 'assets/Wind.mp3',   duration: 10000 }
   ];
 
+  // 2) Animate all text‐items for Rain/Wind
   function applyAnimation(soundName) {
     document.querySelectorAll('.text-item').forEach(el => {
       if (soundName === 'Rain')      el.classList.add('raindrop');
@@ -22,72 +25,55 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  function playRandomAudio() {
-    if (currentAudio) {
-      currentAudio.pause();
-      currentAudio = null;
-    }
-    const { name, src } = audioFiles[
-      Math.floor(Math.random() * audioFiles.length)
-    ];
+  // 3) Play the currentIndex clip, then schedule the next one
+  function playNext() {
+    // tear down previous audio & timer
+    if (switchTimer) clearTimeout(switchTimer);
+    if (currentAudio)  currentAudio.pause();
+
+    // grab the next track & duration
+    const { name, src, duration } = playlist[currentIndex];
     currentSound = name;
     currentAudio = new Audio(src);
     currentAudio.play().catch(console.warn);
+
+    // trigger animations on play
     currentAudio.addEventListener('play', () => applyAnimation(currentSound));
-    currentAudio.addEventListener('ended', playRandomAudio);
+
+    // after `duration`, move to the next track (with wrap‐around)
+    switchTimer = setTimeout(() => {
+      currentIndex = (currentIndex + 1) % playlist.length;
+      playNext();
+    }, duration);
   }
 
-  // When *other* clients create/update boxes:
-  socket.on('new-box', data   => spawnBox(data, false));
-  socket.on('update-box', data=> {
-    const el = document.querySelector(`.text-item[data-id="${data.id}"]`);
-    if (el) el.innerHTML = data.content;
-  });
-
-  // Local click → start audio (on first click) + spawn & broadcast
+  // 4) On first click, kick off the audio loop + always spawn an editable box
   container.addEventListener('click', e => {
-    if (!audioStarted) { playRandomAudio(); audioStarted = true; }
-    const id = Date.now() + '-' + Math.random();
-    spawnBox({ x: e.clientX, y: e.clientY, id, content: '' }, true);
-  });
+    if (!audioStarted) {
+      playNext();
+      audioStarted = true;
+    }
 
-  function spawnBox(data, emit) {
-    const { x,y,id,content } = data;
-    // avoid duplicate if it already exists
-    if (document.querySelector(`.text-item[data-id="${id}"]`)) return;
-
+    // spawn your text‐box exactly as before
     const box = document.createElement('div');
+    box.contentEditable = 'true';
     box.className      = 'text-item';
-    box.setAttribute('data-id', id);
-    box.style.left     = `${x}px`;
-    box.style.top      = `${y}px`;
-    box.contentEditable= 'true';
-    box.innerHTML      = content;
+    box.style.left     = `${e.clientX}px`;
+    box.style.top      = `${e.clientY}px`;
 
-    // broadcast updates as the user types
-    box.addEventListener('input', () => {
-      const payload = { id, content: box.innerHTML };
-      socket.emit('update-box', payload);
-    });
-    // finish on Enter
     box.addEventListener('keydown', ev => {
       if (ev.key === 'Enter') {
         ev.preventDefault();
         box.blur();
       }
     });
-    // on blur, re-animate if needed and re-broadcast
     box.addEventListener('blur', () => {
       if (currentSound === 'Rain' || currentSound === 'Wind') {
         applyAnimation(currentSound);
       }
-      socket.emit('update-box', { id, content: box.innerHTML });
     });
 
     container.appendChild(box);
     box.focus();
-
-    // if this creation came from *this* client, notify others
-    if (emit) socket.emit('new-box', data);
-  }
+  });
 });
