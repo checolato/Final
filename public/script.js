@@ -1,5 +1,6 @@
 window.addEventListener('DOMContentLoaded', () => {
-  const container   = document.getElementById('container');
+  const socket     = io();             
+  const container  = document.getElementById('container');
   let audioStarted  = false;
   let currentAudio  = null;
   let currentSound  = null;
