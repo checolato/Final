@@ -17,6 +17,11 @@ io.on('connection', socket => {
   });
 });
 
-http.listen(3000, () => {
-  console.log('🚀 listening on http://localhost:3000');
+// pick up Heroku’s port or default to 3000 locally
+const PORT = process.env.PORT || 3000;
+
+http.listen(PORT, () => {
+  console.log(`🚀 listening on port ${PORT}`);
 });
+
+
