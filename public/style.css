@@ -6,7 +6,6 @@ html, body, #container {
   font-family: sans-serif;
 }
 
-/* make your text‐blocks visible even when empty */
 .text-item {
   position: absolute;
   min-width: 100px;
@@ -19,15 +18,13 @@ html, body, #container {
   border: 1px dashed rgba(255,255,255,0.7);
 }
 
-/* placeholder when empty */
 .text-item:empty::before {
   content: 'Type here…';
   color: rgba(255,255,255,0.6);
 }
 
-/* your existing animations */
 @keyframes raindrop { to { transform: translateY(100vh); opacity: 0; } }
 @keyframes flyaway { to { transform: translate(100vw,-100vh); opacity: 0; } }
 
-.raindrop   { animation: raindrop 4s ease-in forwards; }
-.fly-away   { animation: flyaway  4s ease-in forwards; }
+.raindrop { animation: raindrop 4s ease-in forwards; }
+.fly-away { animation: flyaway  4s ease-in forwards; }
