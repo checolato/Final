@@ -28,3 +28,22 @@ html, body, #container {
 
 .raindrop { animation: raindrop 4s ease-in forwards; }
 .fly-away { animation: flyaway  4s ease-in forwards; }
+/* 1a) Darken effect: smooth transition to a darker bg */
+.text-item.darken {
+  transition: background-color 5s ease-in;
+  background-color: rgba(0, 0, 0, 0.7) !important;
+}
+
+/* 1b) Particulate effect: a little noise tile + gentle movement */
+.text-item.particulate {
+  background-image:
+    radial-gradient(rgba(255,255,255,0.3) 1px, transparent 1px),
+    rgba(0,0,0,0.3);
+  background-size: 4px 4px, auto;
+  animation: particle-move 1s linear infinite;
+}
+
+@keyframes particle-move {
+  to { background-position: 8px 8px, 0 0; }
+}
+
