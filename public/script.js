@@ -1,26 +1,24 @@
-// public/script.js
-
 window.addEventListener('DOMContentLoaded', () => {
-  const socket     = io();
-  const container  = document.getElementById('container');
+  const container = document.getElementById('container');
 
   let audioStarted = false;
   let currentAudio = null;
   let currentSound = null;
-  let switchTimer  = null;
+  let switchTimer = null;
   let currentIndex = 0;
 
   const playlist = [
-    { name: 'Park', src: 'assets/Park.mp3',   duration: 20000 },
-    { name: 'Rain', src: 'assets/Rain.mp3',   duration: 15000 },
-    { name: 'Bird', src: 'assets/Bird.mp3',   duration: 20000 },
-    { name: 'Wind', src: 'assets/Wind.mp3',   duration: 10000 }
+    { name: 'Park', src: 'assets/Park.mp3', duration: 20000 },
+    { name: 'Rain', src: 'assets/Rain.mp3', duration: 15000 },
+    { name: 'Bird', src: 'assets/Bird.mp3', duration: 20000 },
+    { name: 'Wind', src: 'assets/Wind.mp3', duration: 10000 }
   ];
 
   function applyAnimation(soundName) {
     document.querySelectorAll('.text-item').forEach(el => {
-      if (soundName === 'Rain')      el.classList.add('raindrop');
+      if (soundName === 'Rain') el.classList.add('raindrop');
       else if (soundName === 'Wind') el.classList.add('fly-away');
+
       if (soundName === 'Rain' || soundName === 'Wind') {
         el.addEventListener('animationend', () => el.remove());
       }
@@ -29,7 +27,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   function applyPageDarken(soundName) {
     if (soundName === 'Rain') container.classList.add('darken');
-    else                     container.classList.remove('darken');
+    else container.classList.remove('darken');
   }
 
   function playNext() {
@@ -52,54 +50,65 @@ window.addEventListener('DOMContentLoaded', () => {
     }, duration);
   }
 
-  // Real-time handlers
-  socket.on('new-box', data => spawnBox(data, false));
-  socket.on('update-box', data => {
-    const el = document.querySelector(`.text-item[data-id="${data.id}"]`);
-    if (el) el.innerHTML = data.content;
-  });
-
   container.addEventListener('click', e => {
     if (!audioStarted) {
       playNext();
       audioStarted = true;
     }
     const id = Date.now() + '-' + Math.random();
-    spawnBox({ x: e.clientX, y: e.clientY, id, content: '' }, true);
+    spawnBox({ x: e.clientX, y: e.clientY, id });
   });
 
-  function spawnBox(data, emit) {
-    const { x, y, id, content } = data;
+  function spawnBox(data) {
+    const { x, y, id } = data;
     if (document.querySelector(`.text-item[data-id="${id}"]`)) return;
 
     const box = document.createElement('div');
-    box.className       = 'text-item';
+    box.className = 'text-item';
     box.setAttribute('data-id', id);
-    box.style.left      = `${x}px`;
-    box.style.top       = `${y}px`;
-    box.contentEditable = 'true';
-    box.innerHTML       = content;
+    box.style.left = `${x}px`;
+    box.style.top = `${y}px`;
+    box.innerHTML = '<em>Listening...</em>';
 
-    box.addEventListener('input', () => {
-      socket.emit('update-box', { id, content: box.innerHTML });
-    });
-    box.addEventListener('keydown', ev => {
-      if (ev.key === 'Enter') {
-        ev.preventDefault();
-        box.blur();
+    container.appendChild(box);
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      box.innerHTML = 'Speech Recognition not supported.';
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+
+    let finalTranscript = '';
+
+    recognition.onresult = (event) => {
+      let interimTranscript = '';
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalTranscript += transcript;
+        } else {
+          interimTranscript += transcript;
+        }
       }
-    });
-    box.addEventListener('blur', () => {
+      box.innerHTML = finalTranscript + '<span style="opacity:0.6">' + interimTranscript + '</span>';
+    };
+
+    recognition.onerror = (event) => {
+      box.innerHTML = 'Error: ' + event.error;
+    };
+
+    recognition.onend = () => {
       if (currentSound === 'Rain' || currentSound === 'Wind') {
         applyAnimation(currentSound);
         applyPageDarken(currentSound);
       }
-      socket.emit('update-box', { id, content: box.innerHTML });
-    });
+    };
 
-    container.appendChild(box);
-    box.focus();
-
-    if (emit) socket.emit('new-box', data);
+    recognition.start();
   }
 });

@@ -1,14 +1,14 @@
-/* public/style.css */
-
 html, body, #container {
-  margin: 0; padding: 0;
-  width: 100%; height: 100%;
-  overflow: hidden; position: relative;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
   background: url('assets/background.png') center/cover no-repeat;
   font-family: sans-serif;
 }
 
-/* DARKEN EFFECT: dims the whole page when Rain plays */
 #container.darken {
   filter: brightness(50%);
   transition: filter 1s ease;
@@ -22,15 +22,11 @@ html, body, #container {
   min-height: 1.2em;
   padding: 4px;
   outline: none;
-  cursor: text;
   color: #fff;
   background: rgba(0,0,0,0.3);
   border: 1px dashed rgba(255,255,255,0.7);
-}
-
-.text-item:empty::before {
-  content: 'Type here…';
-  color: rgba(255,255,255,0.6);
+  font-size: 16px;
+  line-height: 1.4em;
 }
 
 @keyframes raindrop {
