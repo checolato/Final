@@ -14,6 +14,18 @@ html, body, #container {
   transition: filter 1s ease;
 }
 
+#webcam {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.1; /* Low visibility for testing */
+  z-index: 0;
+  opacity: 1; /* TEMP: make visible */
+  border: 2px solid red; /* highlight area */
+}
+
 .text-item {
   position: absolute;
   display: block;
@@ -21,10 +33,9 @@ html, body, #container {
   min-width: 100px;
   min-height: 1.2em;
   padding: 4px;
-  outline: none;
   color: #fff;
-  background: rgba(0,0,0,0.3);
-  border: 1px dashed rgba(255,255,255,0.7);
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px dashed rgba(255, 255, 255, 0.7);
   font-size: 16px;
   line-height: 1.4em;
 }

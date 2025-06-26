@@ -1,16 +1,16 @@
-  window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', () => {
   const container = document.getElementById('container');
+  const webcam = document.getElementById('webcam');
+  const canvas = document.getElementById('motion-canvas');
+  const ctx = canvas.getContext('2d');
 
-  // Request microphone access up front
-  navigator.mediaDevices.getUserMedia({ audio: true }).catch(err => {
-    console.warn('Microphone permission was denied or failed:', err);
-  });
-  
   let audioStarted = false;
   let currentAudio = null;
   let currentSound = null;
   let switchTimer = null;
   let currentIndex = 0;
+  let lastFrame = null;
+  let lastSpawn = 0;
 
   const playlist = [
     { name: 'Park', src: 'assets/Park.mp3', duration: 20000 },
@@ -19,12 +19,19 @@
     { name: 'Wind', src: 'assets/Wind.mp3', duration: 10000 }
   ];
 
+  // Start webcam
+  navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(stream => {
+    webcam.srcObject = stream;
+    detectMotion();
+  }).catch(err => {
+    alert("Camera or microphone access denied.");
+    console.error(err);
+  });
 
   function applyAnimation(soundName) {
     document.querySelectorAll('.text-item').forEach(el => {
       if (soundName === 'Rain') el.classList.add('raindrop');
       else if (soundName === 'Wind') el.classList.add('fly-away');
-
       if (soundName === 'Rain' || soundName === 'Wind') {
         el.addEventListener('animationend', () => el.remove());
       }
@@ -56,26 +63,14 @@
     }, duration);
   }
 
-  container.addEventListener('click', e => {
-    if (!audioStarted) {
-      playNext();
-      audioStarted = true;
-    }
+  function spawnBox(x, y) {
     const id = Date.now() + '-' + Math.random();
-    spawnBox({ x: e.clientX, y: e.clientY, id });
-  });
-
-  function spawnBox(data) {
-    const { x, y, id } = data;
-    if (document.querySelector(`.text-item[data-id="${id}"]`)) return;
-
     const box = document.createElement('div');
     box.className = 'text-item';
     box.setAttribute('data-id', id);
     box.style.left = `${x}px`;
     box.style.top = `${y}px`;
     box.innerHTML = '<em>Listening...</em>';
-
     container.appendChild(box);
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -92,20 +87,17 @@
     let finalTranscript = '';
 
     recognition.onresult = (event) => {
-      let interimTranscript = '';
+      let interim = '';
       for (let i = event.resultIndex; i < event.results.length; ++i) {
         const transcript = event.results[i][0].transcript;
-        if (event.results[i].isFinal) {
-          finalTranscript += transcript;
-        } else {
-          interimTranscript += transcript;
-        }
+        if (event.results[i].isFinal) finalTranscript += transcript;
+        else interim += transcript;
       }
-      box.innerHTML = finalTranscript + '<span style="opacity:0.6">' + interimTranscript + '</span>';
+      box.innerHTML = finalTranscript + '<span style="opacity:0.6">' + interim + '</span>';
     };
 
-    recognition.onerror = (event) => {
-      box.innerHTML = 'Error: ' + event.error;
+    recognition.onerror = (e) => {
+      box.innerHTML = 'Error: ' + e.error;
     };
 
     recognition.onend = () => {
@@ -117,4 +109,34 @@
 
     recognition.start();
   }
+
+  function detectMotion() {
+  ctx.drawImage(webcam, 0, 0, canvas.width, canvas.height);
+  const current = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+  if (lastFrame) {
+    let diff = 0;
+    for (let i = 0; i < current.data.length; i += 4) {
+      const avgCurr = (current.data[i] + current.data[i + 1] + current.data[i + 2]) / 3;
+      const avgLast = (lastFrame.data[i] + lastFrame.data[i + 1] + lastFrame.data[i + 2]) / 3;
+      diff += Math.abs(avgCurr - avgLast);
+    }
+
+    const now = Date.now();
+    if (diff > 1000000 && now - lastSpawn > 3000) {
+      if (!audioStarted) {
+        playNext();
+        audioStarted = true;
+      }
+
+      const x = 100 + Math.random() * (window.innerWidth - 200);
+      const y = 100 + Math.random() * (window.innerHeight - 200);
+      spawnBox(x, y);
+      lastSpawn = now;
+    }
+  }
+
+  lastFrame = current;
+  requestAnimationFrame(detectMotion);
+}
 });
