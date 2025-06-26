@@ -6,7 +6,7 @@ html, body, #container {
   overflow: hidden;
   position: relative;
   background: url('assets/background.png') center/cover no-repeat;
-  font-family: sans-serif;
+  font-family: 'Playfair Display', serif;
 }
 
 #container.darken {
