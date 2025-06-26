@@ -1,6 +1,11 @@
-window.addEventListener('DOMContentLoaded', () => {
+  window.addEventListener('DOMContentLoaded', () => {
   const container = document.getElementById('container');
 
+  // Request microphone access up front
+  navigator.mediaDevices.getUserMedia({ audio: true }).catch(err => {
+    console.warn('Microphone permission was denied or failed:', err);
+  });
+  
   let audioStarted = false;
   let currentAudio = null;
   let currentSound = null;
@@ -13,6 +18,7 @@ window.addEventListener('DOMContentLoaded', () => {
     { name: 'Bird', src: 'assets/Bird.mp3', duration: 20000 },
     { name: 'Wind', src: 'assets/Wind.mp3', duration: 10000 }
   ];
+
 
   function applyAnimation(soundName) {
     document.querySelectorAll('.text-item').forEach(el => {
