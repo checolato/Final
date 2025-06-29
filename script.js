@@ -97,8 +97,13 @@ window.addEventListener('DOMContentLoaded', () => {
     };
 
     recognition.onerror = (e) => {
-      box.innerHTML = 'Error: ' + e.error;
+  if (e.error === 'aborted' || e.error === 'no-speech') {
+    box.innerHTML = ''; // Just keep it blank
+  } else {
+    box.innerHTML = 'Error: ' + e.error;
+  }
     };
+
 
     recognition.onend = () => {
       if (currentSound === 'Rain' || currentSound === 'Wind') {
