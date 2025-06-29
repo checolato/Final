@@ -97,13 +97,15 @@ window.addEventListener('DOMContentLoaded', () => {
     };
 
     recognition.onerror = (e) => {
-  if (e.error === 'aborted' || e.error === 'no-speech') {
-    box.innerHTML = ''; // Just keep it blank
-  } else {
-    box.innerHTML = 'Error: ' + e.error;
-  }
-    };
+    const ignoredErrors = ['aborted', 'no-speech', 'not-allowed', 'service-not-allowed'];
 
+    if (ignoredErrors.includes(e.error)) {
+    box.innerHTML = ''; // Keep box empty
+    } else {
+    console.warn('Speech recognition error:', e.error); // Log it for debug
+    box.innerHTML = ''; // Or show 'Error: ' + e.error if you prefer
+    } 
+    };
 
     recognition.onend = () => {
       if (currentSound === 'Rain' || currentSound === 'Wind') {
